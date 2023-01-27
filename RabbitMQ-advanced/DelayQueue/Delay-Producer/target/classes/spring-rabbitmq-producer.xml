@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       https://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/rabbit
+       http://www.springframework.org/schema/rabbit/spring-rabbit.xsd">
+    <!--加载配置文件-->
+    <context:property-placeholder location="classpath:rabbitmq.properties"/>
+    <!-- 定义rabbitmq connectionFactory -->
+    <rabbit:connection-factory id="connectionFactory" host="${rabbitmq.host}"
+                               port="${rabbitmq.port}"
+                               username="${rabbitmq.username}"
+                               password="${rabbitmq.password}"
+                               confirm-type="CORRELATED"
+                               virtual-host="${rabbitmq.virtual-host}"/>
+    <!--定义管理交换机、队列-->
+    <rabbit:admin connection-factory="connectionFactory"/>
+    <!--定义rabbitTemplate对象操作可以在代码中方便发送消息-->
+    <rabbit:template id="rabbitTemplate" connection-factory="connectionFactory"/>
+    <!--
+        延迟队列实现：
+            1.定义正常队列和交换机
+            2.定义死信队列和死信交换机
+            3.将正常队列和死信交换机绑定，并设置正常队列的TTL（三十分钟）
+    -->
+    <rabbit:queue id="OrderNormalQueue" name="OrderNormalQueue" auto-declare="true">
+        <rabbit:queue-arguments>
+            <!--x-dead-letter-exchange：死信交换机名称-->
+            <entry key="x-dead-letter-exchange" value="OrderDeadLetterExchange"/>
+            <!--x-dead-letter-routing-key：消息发送给死信交换机的routingKey 要符合死信交换机和死信队列绑定的routingKey-->
+            <entry key="x-dead-letter-routing-key" value="wyh.dlx.order.ack"/>
+            <!--设置队列的ttl-->
+            <entry key="x-message-ttl" value="10000" value-type="java.lang.Integer"/>
+        </rabbit:queue-arguments>
+    </rabbit:queue>
+    <rabbit:topic-exchange name="OrderNormalExchange" id="OrderNormalExchange" auto-declare="true">
+        <rabbit:bindings>
+            <rabbit:binding queue="OrderNormalQueue" pattern="wyh.order.#"/>
+        </rabbit:bindings>
+    </rabbit:topic-exchange>
+
+    <rabbit:queue id="OrderDeadLetterQueue" name="OrderDeadLetterQueue" auto-declare="true"/>
+    <rabbit:topic-exchange name="OrderDeadLetterExchange" id="OrderDeadLetterExchange" auto-declare="true">
+        <rabbit:bindings>
+            <rabbit:binding queue="OrderDeadLetterQueue" pattern="wyh.dlx.order.#"/>
+        </rabbit:bindings>
+    </rabbit:topic-exchange>
+
+</beans>

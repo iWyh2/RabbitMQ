@@ -1,0 +1,27 @@
+#配置rabbitmq
+spring:
+  rabbitmq:
+    host: 192.168.88.92
+    port: 5672
+    username: wyh
+    password: wyh
+    virtual-host: /wyh
+    #消费端Ack配置
+    listener:
+      #设置监听容器（Listener container）类型，如不设置，将会默认为SimpleRabbitListenerContainerFactory，且下面的direct配置不生效
+      type: direct
+      direct:
+        acknowledge-mode: manual        #手动确认接收消息
+        default-requeue-rejected: true  #消息被拒后重新放入队列
+        retry:
+          enabled: true                 #开启重试
+        prefetch: 1                     #消费端限流 一次只拿一条消息消费 确认后才继续拉取下一条
+      simple:
+        acknowledge-mode: manual        #手动确认接收消息
+        default-requeue-rejected: true  #消息被拒后重新放入队列
+        retry:
+          enabled: true                 #开启重试
+        prefetch: 1                     #消费端限流 一次只拿一条消息消费 确认后才继续拉取下一条
+
+
+

@@ -1,0 +1,12 @@
+#配置rabbitmq
+spring:
+  rabbitmq:
+    host: 192.168.88.92
+    port: 5672
+    username: wyh
+    password: wyh
+    virtual-host: /wyh
+    #生产端的消息可靠性
+    publisher-confirm-type: correlated #开启confirm"确认模式"
+    publisher-returns: true            #开启return"回退模式"
+
